@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} - Team Run #{{ run.id }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.detail', id=project.id) }}">{{ project.title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Run #{{ run.id }} ({{ run.method|title }})</li>
+            </ol>
+        </nav>
+        <div class="d-flex align-items-center gap-2">
+            <h3 class="fw-bold mb-0">Formed Teams for {{ project.title }}</h3>
+            {% if run.method == 'traditional' %}
+            <span class="badge badge-soft-primary"><i class="bi bi-diagram-2 me-1"></i>Traditional Method</span>
+            {% else %}
+            <span class="badge badge-soft-success"><i class="bi bi-cpu me-1"></i>AI-Powered Recommendations</span>
+            {% endif %}
+
+            {% if run.is_approved %}
+            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Approved & Finalized</span>
+            {% else %}
+            <span class="badge badge-soft-warning"><i class="bi bi-hourglass-split me-1"></i>Proposed (Pending Review)</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        {% if g.user.is_faculty() %}
+        <a href="{{ url_for('reports.export_teams_csv', run_id=run.id) }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+        <a href="{{ url_for('comparison.compare_project', project_id=project.id) }}" class="btn btn-outline-info btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left-right"></i> Compare Methods
+        </a>
+        {% if not run.is_approved %}
+        <form method="POST" action="{{ url_for('teams.approve_run', project_id=project.id, run_id=run.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-success btn-sm d-flex align-items-center gap-1 shadow-sm" data-confirm="Are you sure you want to approve and finalize these team assignments for students?">
+                <i class="bi bi-check2-circle"></i> Approve & Finalize Teams
+            </button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Run Metrics Summary Strip -->
+<div class="card border mb-4 shadow-sm">
+    <div class="card-body p-3">
+        <div class="row g-3 text-center">
+            <div class="col-sm-2 col-4 border-end">
+                <span class="text-muted small">Teams Formed</span>
+                <div class="fw-bold fs-5 text-primary">{{ teams|length }}</div>
+            </div>
+            <div class="col-sm-2 col-4 border-end">
+                <span class="text-muted small">Assigned</span>
+                <div class="fw-bold fs-5 text-dark">{{ run.metrics.get('assigned_count', 0) }} Students</div>
+            </div>
+            <div class="col-sm-2 col-4 border-end">
+                <span class="text-muted small">Avg Skill Coverage</span>
+                <div class="fw-bold fs-5 text-success">{{ run.metrics.get('avg_skill_coverage', 0) }}%</div>
+            </div>
+            <div class="col-sm-2 col-4 border-end">
+                <span class="text-muted small">Avg Role Coverage</span>
+                <div class="fw-bold fs-5 text-info">{{ run.metrics.get('avg_role_coverage', 0) }}%</div>
+            </div>
+            <div class="col-sm-2 col-4 border-end">
+                <span class="text-muted small">Size Violations</span>
+                <div class="fw-bold fs-5 {% if run.metrics.get('team_size_violations', 0) > 0 %}text-warning{% else %}text-muted{% endif %}">
+                    {{ run.metrics.get('team_size_violations', 0) }}
+                </div>
+            </div>
+            <div class="col-sm-2 col-4">
+                <span class="text-muted small">Runtime</span>
+                <div class="fw-bold fs-5 text-muted">{{ run.metrics.get('runtime_ms', 0) }} ms</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Proposed Teams Grid -->
+<div class="row g-4 mb-4">
+    {% for team in teams %}
+    <div class="col-lg-6">
+        <div class="card h-100 border shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-dark fs-5">{{ team.name }}</span>
+                    <span class="badge badge-soft-primary">{{ team.members|length }}/{{ project.preferred_team_size }} Students</span>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark border">
+                        Score: <strong>{{ team.overall_score }}</strong>/100
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-3">
+                <!-- Skill Coverage Progress -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1 small">
+                        <span class="text-muted fw-medium">Required Skill Coverage:</span>
+                        <span class="fw-bold {% if team.skill_coverage_pct >= 80 %}text-success{% elif team.skill_coverage_pct >= 50 %}text-primary{% else %}text-warning{% endif %}">
+                            {{ team.skill_coverage_pct }}%
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {% if team.skill_coverage_pct >= 80 %}bg-success{% elif team.skill_coverage_pct >= 50 %}bg-primary{% else %}bg-warning{% endif %}"
+                             style="width: {{ team.skill_coverage_pct }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Explanation Summary snippet -->
+                <p class="text-muted small mb-3 border-start border-3 border-primary ps-2 bg-light py-1 rounded-end">
+                    {{ team.explanation_narrative[:160] }}{% if team.explanation_narrative|length > 160 %}...{% endif %}
+                </p>
+
+                <!-- Members List -->
+                <h6 class="fw-bold small text-uppercase text-muted mb-2">Team Members & Assigned Roles</h6>
+                <div class="list-group list-group-flush border rounded mb-3">
+                    {% for m in team.members %}
+                    <div class="list-group-item d-flex align-items-center justify-content-between py-2 px-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-circle" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                {{ m.student.full_name[0]|upper }}
+                            </div>
+                            <div>
+                                <a href="{{ url_for('students.profile', id=m.student.id) }}" class="fw-semibold text-dark text-decoration-none small">
+                                    {{ m.student.full_name }}
+                                </a>
+                                {% if m.cluster_label and m.cluster_label != 'Generalist' %}
+                                <span class="badge badge-soft-info" style="font-size: 0.65rem;">{{ m.cluster_label }}</span>
+                                {% endif %}
+                                <div class="text-muted" style="font-size: 0.7rem;">
+                                    Skills: {{ m.student.skills[:3]|map(attribute='skill.name')|join(', ') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge badge-soft-primary" style="font-size: 0.72rem;">{{ m.assigned_role }}</span>
+                            {% if g.user.is_faculty() and not run.is_approved %}
+                            <!-- Reassign button opens modal -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" title="Move Student"
+                                    data-bs-toggle="modal" data-bs-target="#moveModal_{{ m.student.id }}">
+                                <i class="bi bi-arrows-move" style="font-size: 0.75rem;"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if g.user.is_faculty() and not run.is_approved %}
+                    <!-- Move Modal for this student -->
+                    <div class="modal fade" id="moveModal_{{ m.student.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <form method="POST" action="{{ url_for('teams.move_student') }}">
+                                    <input type="hidden" name="student_id" value="{{ m.student.id }}">
+                                    <input type="hidden" name="from_team_id" value="{{ team.id }}">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title fw-bold">Move {{ m.student.full_name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="small text-muted mb-3">Reassign student from <strong>{{ team.name }}</strong> to another team:</p>
+                                        <label class="form-label small fw-semibold">Destination Team</label>
+                                        <select class="form-select" name="to_team_id" required>
+                                            {% for other_t in teams %}
+                                            {% if other_t.id != team.id %}
+                                            <option value="{{ other_t.id }}">{{ other_t.name }} (Current: {{ other_t.members|length }} members)</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Move Student</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Card Footer Actions -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+                            data-bs-toggle="modal" data-bs-target="#whyThisTeamModal" data-team-id="{{ team.id }}">
+                        <i class="bi bi-question-circle"></i> Why This Team?
+                    </button>
+                    <a href="{{ url_for('balance.balance_project', project_id=project.id, run_id=run.id) }}" class="small text-muted text-decoration-none">
+                        <i class="bi bi-bar-chart me-1"></i>Team Balance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Unassigned Students Section -->
+{% if unassigned_students and unassigned_students|length > 0 %}
+<div class="card border border-warning shadow-sm mb-4">
+    <div class="card-header bg-warning bg-opacity-10 border-bottom border-warning border-opacity-25 fw-semibold d-flex align-items-center justify-content-between text-dark">
+        <span><i class="bi bi-person-exclamation me-2 text-warning"></i>Unassigned Students ({{ unassigned_students|length }})</span>
+        <a href="{{ url_for('audit.project_audit', project_id=project.id) }}" class="small text-dark text-decoration-underline">View Allocation Audit</a>
+    </div>
+    <div class="card-body p-3">
+        <p class="small text-muted mb-3">The following students could not be accommodated into complete teams without violating target team-size bounds or prerequisite constraints:</p>
+        <div class="row g-2">
+            {% for u in unassigned_students %}
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between small">
+                    <span class="fw-semibold">{{ u.full_name }}</span>
+                    <span class="text-muted">{{ u.department }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

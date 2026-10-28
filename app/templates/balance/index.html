@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Team Balance Analyzer - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Team Balance</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-1">Smart Team Balance Analyzer</h3>
+        <p class="text-muted small mb-0">Inspect technical skill coverage, functional role health, availability conflicts, and duplicate concentrations.</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        {% if all_projects|length > 1 %}
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Project: {{ project.title[:20] }}...
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                {% for p in all_projects %}
+                <li><a class="dropdown-item small" href="{{ url_for('balance.balance_project', project_id=p.id) }}">{{ p.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if team_analyses and team_analyses|length > 0 %}
+<div class="row g-4">
+    {% for ana in team_analyses %}
+    <div class="col-lg-6">
+        <div class="card h-100 border shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold fs-5 text-dark">{{ ana.team.name }}</span>
+                    <span class="badge badge-soft-primary">{{ ana.members_count }}/{{ ana.target_size }} Members</span>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark border">
+                        Balance Score: <strong>{{ ana.overall_score }}</strong>/100
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Skill Coverage Bar -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1 small">
+                        <span class="text-muted fw-semibold">Required Skills Covered:</span>
+                        <span class="fw-bold text-success">{{ ana.covered_skills|length }} of {{ ana.covered_skills|length + ana.missing_skills|length }} Skills</span>
+                    </div>
+                    {% set total_sk = ana.covered_skills|length + ana.missing_skills|length %}
+                    {% set cov_pct = (ana.covered_skills|length / total_sk * 100) if total_sk > 0 else 100 %}
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {% if cov_pct >= 80 %}bg-success{% elif cov_pct >= 50 %}bg-primary{% else %}bg-warning{% endif %}"
+                             style="width: {{ cov_pct }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Skills Available vs Missing -->
+                <div class="mb-3">
+                    <span class="text-muted small fw-medium d-block mb-1">Skills Available in This Team:</span>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        {% for sk in ana.covered_skills %}
+                        <span class="badge badge-soft-success py-1 px-2" style="font-size: 0.72rem;">
+                            <i class="bi bi-check-circle me-1"></i>{{ sk.name }} ({{ sk.proficiency }})
+                        </span>
+                        {% endfor %}
+                    </div>
+
+                    {% if ana.missing_skills %}
+                    <span class="text-danger small fw-medium d-block mb-1">Missing Project-Required Skills:</span>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for msk in ana.missing_skills %}
+                        <span class="badge badge-soft-danger py-1 px-2" style="font-size: 0.72rem;">
+                            <i class="bi bi-x-circle me-1"></i>{{ msk.name }} {% if msk.is_mandatory %}(Mandatory){% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <span class="badge badge-soft-success small"><i class="bi bi-check-all me-1"></i>Zero Skill Deficits</span>
+                    {% endif %}
+                </div>
+
+                <!-- Role Health Checklist -->
+                <div class="mb-3">
+                    <span class="text-muted small fw-medium d-block mb-1">Role Coverage Health:</span>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for rc in ana.role_checklist %}
+                        <div class="badge {% if rc.status == 'Covered' %}badge-soft-primary{% else %}badge-soft-warning{% endif %} p-1 px-2" style="font-size: 0.72rem;">
+                            <i class="bi {% if rc.status == 'Covered' %}bi-check2{% else %}bi-exclamation-triangle{% endif %} me-1"></i>
+                            {{ rc.role }}: <strong>{{ rc.status }}</strong>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Availability Overlap & Conflicts -->
+                <div class="mb-3">
+                    <div class="p-2 bg-light rounded small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Mutual Overlap Days:</span>
+                            <span class="fw-semibold">{{ ana.shared_days|join(', ') if ana.shared_days else 'Asynchronous schedule' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Average Experience:</span>
+                            <span class="fw-semibold">{{ ana.avg_experience_months }} Months</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duplicate Concentrations & Recommendations -->
+                {% if ana.duplicates %}
+                <div class="alert alert-warning py-1 px-2 small mb-2">
+                    <i class="bi bi-layers me-1"></i><strong>High Skill Concentration:</strong> {{ ana.duplicates|join(', ') }}
+                </div>
+                {% endif %}
+
+                <div>
+                    <h6 class="fw-bold small text-uppercase text-muted mb-1">Suggested Balance Improvements:</h6>
+                    <ul class="ps-3 mb-0 small text-secondary">
+                        {% for sug in ana.suggestions %}
+                        <li class="mb-1">{{ sug }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card border p-5 text-center text-muted">
+    <i class="bi bi-pie-chart fs-1 mb-2"></i>
+    <h5>No teams formed yet for this project</h5>
+    <p class="small">Generate proposed teams first using Traditional or AI methods to analyze team balance.</p>
+    <a href="{{ url_for('teams.generate', project_id=project.id) }}" class="btn btn-primary btn-sm mx-auto">Generate Teams</a>
+</div>
+{% endif %}
+{% endblock %}

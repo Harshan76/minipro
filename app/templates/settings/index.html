@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Configuration - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-1">Platform Settings & Configuration</h3>
+    <p class="text-muted small">Configure baseline algorithm weights, inspect database connectivity, or reset synthetic demo data.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Baseline Matching Weights Configuration -->
+    <div class="col-lg-6">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-sliders me-2 text-primary"></i>Baseline Traditional Algorithm Weights
+            </div>
+            <div class="card-body p-4">
+                <p class="small text-muted mb-3">
+                    Adjust the relative importance of student-project matching dimensions. All weights are automatically normalized so their sum equals 100%.
+                </p>
+
+                <form method="POST" action="{{ url_for('settings.update_weights') }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Technical Skill Coverage Weight</label>
+                        <input type="number" step="0.01" min="0.05" max="0.80" class="form-control" name="weight_skill" value="{{ weights.skill }}">
+                        <div class="form-text small">Default: 0.40 (40%)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Interest Alignment Weight</label>
+                        <input type="number" step="0.01" min="0.05" max="0.60" class="form-control" name="weight_interest" value="{{ weights.interest }}">
+                        <div class="form-text small">Default: 0.20 (20%)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Relevant Experience Weight</label>
+                        <input type="number" step="0.01" min="0.05" max="0.50" class="form-control" name="weight_experience" value="{{ weights.experience }}">
+                        <div class="form-text small">Default: 0.15 (15%)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Availability Compatibility Weight</label>
+                        <input type="number" step="0.01" min="0.05" max="0.50" class="form-control" name="weight_availability" value="{{ weights.availability }}">
+                        <div class="form-text small">Default: 0.15 (15%)</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold">Preferred Role Alignment Weight</label>
+                        <input type="number" step="0.01" min="0.05" max="0.40" class="form-control" name="weight_role" value="{{ weights.role }}">
+                        <div class="form-text small">Default: 0.10 (10%)</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4 fw-medium">
+                        <i class="bi bi-check-circle me-1"></i> Update & Normalize Weights
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Diagnostics & Demo Data Reset -->
+    <div class="col-lg-6">
+        <div class="card border shadow-sm mb-4">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-database me-2 text-primary"></i>Database & Storage Diagnostics
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <span class="text-muted small fw-medium d-block">Active Database Connection:</span>
+                    <code class="p-2 bg-light border rounded d-block text-break small mt-1">{{ db_uri }}</code>
+                </div>
+
+                <div class="row g-2 text-center small mb-3">
+                    <div class="col-4">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted">Students</span>
+                            <div class="fw-bold">{{ counts.students }}</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted">Projects</span>
+                            <div class="fw-bold">{{ counts.projects }}</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted">Teams</span>
+                            <div class="fw-bold">{{ counts.teams }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-light border small text-muted mb-0">
+                    <i class="bi bi-info-circle text-primary me-1"></i>
+                    To switch between SQLite and MySQL, update the <code>DATABASE_URL</code> variable in <code>.env</code> file.
+                </div>
+            </div>
+        </div>
+
+        <!-- Demonstration Reset Card -->
+        <div class="card border border-warning shadow-sm">
+            <div class="card-header bg-warning bg-opacity-10 fw-semibold text-dark">
+                <i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>Demonstration Mode Reset
+            </div>
+            <div class="card-body p-4">
+                <p class="small text-secondary mb-3">
+                    Reset all database tables to the standard synthetic cohort dataset containing 32 students, 2 sample projects, and baseline AI comparisons for faculty demonstration.
+                </p>
+
+                <form method="POST" action="{{ url_for('settings.reset_demo') }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" data-confirm="Are you sure you want to reset all tables and re-seed 32 demo students?">
+                        <i class="bi bi-trash3 me-1"></i> Re-Seed Clean Demo Data
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

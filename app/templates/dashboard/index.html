@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Overview - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Academic Overview Dashboard</h3>
+        <p class="text-muted small mb-0">Monitor student cohorts, project requirements, and balanced team recommendations.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('projects.create') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+            <i class="bi bi-plus-circle"></i> Create New Project
+        </a>
+        {% if latest_project %}
+        <a href="{{ url_for('teams.generate', project_id=latest_project.id) }}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-magic"></i> Generate Teams
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stat Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="bi bi-people"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_students }}</div>
+                <div class="stat-label">Total Registered Students</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon indigo">
+                <i class="bi bi-folder2-open"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_projects }}</div>
+                <div class="stat-label">Academic Projects</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="bi bi-person-check"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_teams }}</div>
+                <div class="stat-label">Teams Formed & Proposed</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon amber">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ pending_students_count }}</div>
+                <div class="stat-label">Students Awaiting Team</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Cards (Requirement 17) -->
+<div class="mb-4">
+    <h5 class="fw-bold mb-3">Quick Navigation & Workflows</h5>
+    <div class="row g-3">
+        <div class="col-md-4 col-sm-6">
+            <a href="{{ url_for('students.index') }}" class="action-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-soft-primary p-2 fs-6"><i class="bi bi-person-lines-fill"></i></span>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </div>
+                <div class="action-title">Manage Students</div>
+                <div class="action-desc">Add students, update skills, proficiencies, and review availability slots.</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-sm-6">
+            <a href="{{ url_for('projects.create') }}" class="action-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-soft-purple p-2 fs-6"><i class="bi bi-plus-square"></i></span>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </div>
+                <div class="action-title">Create Project</div>
+                <div class="action-desc">Define technical requirements, role expectations, and target team sizes.</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-sm-6">
+            {% if latest_project %}
+            <a href="{{ url_for('teams.generate', project_id=latest_project.id) }}" class="action-card h-100">
+            {% else %}
+            <a href="{{ url_for('projects.create') }}" class="action-card h-100">
+            {% endif %}
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-soft-success p-2 fs-6"><i class="bi bi-magic"></i></span>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </div>
+                <div class="action-title">Generate Teams</div>
+                <div class="action-desc">Create proposed teams using either the Traditional Rules or AI Clustering.</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-sm-6">
+            <a href="{{ url_for('comparison.compare_default') }}" class="action-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-soft-info p-2 fs-6"><i class="bi bi-arrow-left-right"></i></span>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </div>
+                <div class="action-title">Compare Results</div>
+                <div class="action-desc">See transparent side-by-side metric differences between both approaches.</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-sm-6">
+            <a href="{{ url_for('balance.balance_default') }}" class="action-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-soft-warning p-2 fs-6"><i class="bi bi-pie-chart"></i></span>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </div>
+                <div class="action-title">Check Team Balance</div>
+                <div class="action-desc">Inspect skill coverage, role representation, and availability conflicts.</div>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-sm-6">
+            <a href="{{ url_for('teams.ai_recommendations') }}" class="action-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge badge-soft-danger p-2 fs-6"><i class="bi bi-cpu"></i></span>
+                    <i class="bi bi-arrow-right text-muted"></i>
+                </div>
+                <div class="action-title">Review Recommendations</div>
+                <div class="action-desc">Understand discovered student archetypes and the machine learning pipeline.</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Main Row: Active Projects & Recent Activity -->
+<div class="row g-4">
+    <!-- Active Projects Table -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-kanban me-2 text-primary"></i>Active Academic Projects</span>
+                <a href="{{ url_for('projects.index') }}" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if projects and projects|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Project Title</th>
+                                <th>Domain</th>
+                                <th>Team Size</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in projects[:5] %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('projects.detail', id=p.id) }}" class="fw-semibold text-decoration-none text-dark">
+                                        {{ p.title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ p.domain }}</span>
+                                </td>
+                                <td>{{ p.preferred_team_size }} students</td>
+                                <td>
+                                    {% if p.generation_runs and p.generation_runs|length > 0 %}
+                                        {% if p.generation_runs[0].is_approved %}
+                                            <span class="badge badge-soft-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge badge-soft-warning">Proposed Run</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-soft-secondary">No Teams Yet</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('teams.generate', project_id=p.id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Create Teams">
+                                        Form Teams
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-folder-x fs-1 text-muted"></i>
+                    <h6 class="mt-2 text-muted">No projects created yet</h6>
+                    <a href="{{ url_for('projects.create') }}" class="btn btn-primary btn-sm mt-2">
+                        Create Your First Project
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Audit Feed -->
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-clock-history me-2 text-primary"></i>Recent Formation Activity</span>
+                <span class="badge bg-light text-muted small border">Audit Log</span>
+            </div>
+            <div class="card-body p-3">
+                {% if recent_activities and recent_activities|length > 0 %}
+                <ul class="list-unstyled mb-0">
+                    {% for act in recent_activities[:6] %}
+                    <li class="d-flex align-items-start gap-2 mb-3 pb-2 border-bottom">
+                        <div class="mt-1">
+                            {% if 'TEAMS' in act.action_type %}
+                            <i class="bi bi-magic text-primary"></i>
+                            {% elif 'APPROVED' in act.action_type %}
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif 'MOVE' in act.action_type %}
+                            <i class="bi bi-arrow-left-right text-warning"></i>
+                            {% else %}
+                            <i class="bi bi-info-circle text-muted"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small text-dark fw-medium">{{ act.description }}</div>
+                            <div class="text-muted" style="font-size: 0.72rem;">{{ act.timestamp.strftime('%b %d, %H:%M') }}</div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-4 text-muted small">No recent activity logged.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

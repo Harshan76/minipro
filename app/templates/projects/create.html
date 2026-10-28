@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Create Project Wizard - AI Group Project Team Builder{% endblock %}
+
+{% block extra_css %}
+<style>
+.wizard-indicators {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 2rem;
+}
+.wizard-indicators::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #e2e8f0;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+.wizard-indicator-step {
+    position: relative;
+    z-index: 2;
+    background-color: #ffffff;
+    border: 2px solid #cbd5e1;
+    color: #64748b;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.wizard-indicator-step.active {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+.wizard-indicator-step.completed {
+    border-color: var(--success-color);
+    background-color: var(--success-color);
+    color: #ffffff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Project Creation Wizard</li>
+        </ol>
+    </nav>
+    <h3 class="fw-bold mb-1">Project Creation Wizard</h3>
+    <p class="text-muted small">Follow the 4 structured steps to configure course project requirements and constraints.</p>
+</div>
+
+<!-- Wizard Step Indicators -->
+<div class="card border mb-4">
+    <div class="card-body p-4 pb-2">
+        <div class="wizard-indicators">
+            <div class="wizard-indicator-step active" title="Step 1: Details">1</div>
+            <div class="wizard-indicator-step" title="Step 2: Technical Skills">2</div>
+            <div class="wizard-indicator-step" title="Step 3: Team Size & Roles">3</div>
+            <div class="wizard-indicator-step" title="Step 4: Summary & Submit">4</div>
+        </div>
+        <div class="d-flex justify-content-between text-muted small px-1">
+            <span class="fw-semibold">1. Project Details</span>
+            <span class="fw-semibold">2. Required Skills</span>
+            <span class="fw-semibold">3. Team Size & Roles</span>
+            <span class="fw-semibold">4. Review & Confirm</span>
+        </div>
+    </div>
+</div>
+
+<form id="project-wizard-form" method="POST" action="{{ url_for('projects.create') }}">
+    <!-- Step 1: Project Details -->
+    <div class="wizard-step-pane" id="pane-step-1">
+        <div class="card border shadow-sm">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-info-circle me-2 text-primary"></i>Step 1: Project Overview & Academic Domain
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Project Title <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="proj_title" name="title" required placeholder="e.g. Distributed Cloud File Synchronization Service">
+                    <div class="form-text small">Enter a clear, concise project title for faculty and student recognition.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Academic Domain / Field</label>
+                    <input type="text" class="form-control" id="proj_domain" name="domain" value="Web Development & Cloud" placeholder="e.g. Mobile Apps, Machine Learning, Web Development, Cybersecurity">
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label small fw-semibold text-secondary">Project Description & Deliverables <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="proj_desc" name="description" rows="4" required placeholder="Outline key milestones, architecture, and expected student team responsibilities..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Required Skills & Proficiency Levels -->
+    <div class="wizard-step-pane d-none" id="pane-step-2">
+        <div class="card border shadow-sm">
+            <div class="card-header fw-semibold d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-code-slash me-2 text-primary"></i>Step 2: Required Skills & Proficiency</span>
+                <span class="badge bg-light text-muted border">Distinguish Mandatory vs Preferred</span>
+            </div>
+            <div class="card-body p-4">
+                <p class="small text-muted mb-3">
+                    Select the technical competencies required. Mark skills as <strong>Mandatory</strong> if teams without them will incur constraint penalties, or <strong>Preferred</strong> for bonus matching fit.
+                </p>
+
+                <div class="row g-3">
+                    {% for sk in all_skills %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="checkbox" name="skills[]" value="{{ sk.id }}" id="w_sk_{{ sk.id }}" data-skill-name="{{ sk.name }}">
+                                    <label class="form-check-label small fw-semibold" for="w_sk_{{ sk.id }}">{{ sk.name }}</label>
+                                </div>
+                                <span class="badge bg-white text-muted border" style="font-size: 0.65rem;">{{ sk.category }}</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <select class="form-select form-select-sm" name="prof_{{ sk.id }}" style="font-size: 0.72rem;">
+                                    <option value="Beginner">Min: Beginner</option>
+                                    <option value="Intermediate" selected>Min: Intermediate</option>
+                                    <option value="Advanced">Min: Advanced</option>
+                                </select>
+                                <select class="form-select form-select-sm" name="mandatory_{{ sk.id }}" style="font-size: 0.72rem; width: 110px;">
+                                    <option value="1" selected>Mandatory</option>
+                                    <option value="0">Preferred</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Team Size & Roles -->
+    <div class="wizard-step-pane d-none" id="pane-step-3">
+        <div class="card border shadow-sm">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-people me-2 text-primary"></i>Step 3: Team Size, Roles & Prerequisites
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold text-secondary">Target Team Size</label>
+                        <input type="number" class="form-control" id="proj_size" name="preferred_team_size" value="4" min="2" max="10">
+                        <div class="form-text small">Recommended standard size: 4 members.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold text-secondary">Min Allowed Size</label>
+                        <input type="number" class="form-control" id="proj_min_size" name="min_team_size" value="3" min="2" max="8">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold text-secondary">Max Allowed Size</label>
+                        <input type="number" class="form-control" id="proj_max_size" name="max_team_size" value="5" min="2" max="12">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Min Student Experience (Months)</label>
+                        <input type="number" class="form-control" id="proj_exp" name="min_experience_months" value="0" min="0">
+                        <div class="form-text small">Set 0 for introductory courses, or 6-12 months for advanced capstone.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary">Min Student Availability (Hours/Week)</label>
+                        <input type="number" class="form-control" id="proj_hours" name="min_availability_hours" value="8" min="4" max="40">
+                        <div class="form-text small">Students with fewer hours will be flagged in the fairness audit.</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label small fw-semibold text-secondary d-block">Required Functional Team Roles</label>
+                    <div class="row g-2">
+                        {% for role in ['Frontend Developer', 'Backend Developer', 'Fullstack Engineer', 'Data / ML Specialist', 'UI/UX Designer', 'DevOps / Cloud', 'QA / Tester', 'Project Lead'] %}
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-check p-2 border rounded bg-light">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" name="roles[]" value="{{ role }}" id="role_cb_{{ loop.index }}" {% if loop.index <= 4 %}checked{% endif %}>
+                                <label class="form-check-label small fw-medium" for="role_cb_{{ loop.index }}">{{ role }}</label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Summary & Confirm -->
+    <div class="wizard-step-pane d-none" id="pane-step-4">
+        <div class="card border shadow-sm">
+            <div class="card-header fw-semibold bg-primary text-white">
+                <i class="bi bi-clipboard-check me-2"></i>Step 4: Summary Review & Confirmation
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-light border mb-4">
+                    <h5 class="fw-bold mb-1 text-primary" id="sum_title">Project Title</h5>
+                    <span class="badge badge-soft-primary" id="sum_domain">Domain</span>
+                    <p class="text-secondary small mt-2 mb-0" id="sum_desc">Description</p>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="text-muted small">Target Team Size</div>
+                            <div class="fw-bold fs-6" id="sum_size">4 Students</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="text-muted small">Availability Requirement</div>
+                            <div class="fw-bold fs-6" id="sum_hours">8 Hours / Week</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light">
+                            <div class="text-muted small">Experience Expectation</div>
+                            <div class="fw-bold fs-6" id="sum_exp">0 Months</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="fw-bold small text-uppercase text-muted">Required Skills Configured</h6>
+                    <div id="sum_skills" class="d-flex flex-wrap gap-1"></div>
+                </div>
+
+                <div class="mb-0">
+                    <h6 class="fw-bold small text-uppercase text-muted">Functional Roles Expected</h6>
+                    <div id="sum_roles" class="d-flex flex-wrap gap-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wizard Navigation Buttons -->
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-5">
+        <button type="button" class="btn btn-outline-secondary d-none" id="wizard-prev">
+            <i class="bi bi-chevron-left me-1"></i> Previous Step
+        </button>
+        <div class="ms-auto d-flex gap-2">
+            <a href="{{ url_for('projects.index') }}" class="btn btn-light border">Cancel</a>
+            <button type="button" class="btn btn-primary px-4 fw-medium" id="wizard-next">
+                Next Step <i class="bi bi-chevron-right ms-1"></i>
+            </button>
+            <button type="submit" class="btn btn-success px-4 fw-medium d-none" id="wizard-submit">
+                <i class="bi bi-check2-circle me-1"></i> Confirm & Save Project
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
+{% endblock %}

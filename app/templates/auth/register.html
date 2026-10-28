@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Register Account - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-7 col-lg-5">
+        <div class="text-center mb-4">
+            <div class="brand-icon mx-auto mb-2" style="width: 54px; height: 54px; font-size: 1.75rem;">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h3 class="fw-bold mb-1">Create Account</h3>
+            <p class="text-muted small">Join the Academic Project Team Builder</p>
+        </div>
+
+        <div class="card shadow-sm border">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label small fw-semibold text-secondary">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="e.g. john_doe">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label small fw-semibold text-secondary">Full Name</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required placeholder="e.g. John Doe">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label small fw-semibold text-secondary">College Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="john@college.edu">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="department" class="form-label small fw-semibold text-secondary">Department</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Software Engineering">Software Engineering</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Data Science">Data Science</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="role" class="form-label small fw-semibold text-secondary">Role</label>
+                        <select class="form-select" id="role" name="role">
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty Member</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label small fw-semibold text-secondary">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="Minimum 6 characters">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-medium mb-3">
+                        <i class="bi bi-check-circle me-1"></i> Create Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <span class="text-muted small">Already registered?</span>
+                    <a href="{{ url_for('auth.login') }}" class="small fw-semibold text-decoration-none">Sign In here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

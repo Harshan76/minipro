@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}What-If Simulator - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li class="breadcrumb-item active" aria-current="page">What-If Simulator</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-1">What-If Team Formation Simulator</h3>
+        <p class="text-muted small mb-0">Experiment with team sizes, matching weights, and availability constraints before finalizing assignments.</p>
+    </div>
+
+    <div>
+        {% if all_projects|length > 1 %}
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Project: {{ project.title[:20] }}...
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                {% for p in all_projects %}
+                <li><a class="dropdown-item small" href="{{ url_for('simulation.simulate_project', project_id=p.id) }}">{{ p.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Simulator Parameters Control Panel -->
+    <div class="col-lg-5">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-sliders me-2 text-primary"></i>Simulated Parameter Controls
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('simulation.simulate_project', project_id=project.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Simulated Team Size: <span id="lbl_size" class="fw-bold text-primary">{{ project.preferred_team_size }}</span> members</label>
+                        <input type="range" class="form-range" name="team_size" min="2" max="6" step="1" value="{{ project.preferred_team_size }}"
+                               oninput="document.getElementById('lbl_size').textContent = this.value">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Min Availability Filter: <span id="lbl_hours" class="fw-bold text-primary">{{ project.min_availability_hours }}</span> h/week</label>
+                        <input type="range" class="form-range" name="min_availability_hours" min="4" max="20" step="2" value="{{ project.min_availability_hours }}"
+                               oninput="document.getElementById('lbl_hours').textContent = this.value">
+                        <div class="form-text small">Filters eligible student pool based on available hours.</div>
+                    </div>
+
+                    <h6 class="fw-bold small text-uppercase text-muted mt-4 mb-2">Simulated Baseline Weight Coefficients</h6>
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <label class="form-label small text-secondary">Skill: <span id="lbl_ws">40%</span></label>
+                            <input type="range" class="form-range" name="weight_skill" min="0.1" max="0.7" step="0.05" value="0.40"
+                                   oninput="document.getElementById('lbl_ws').textContent = Math.round(this.value*100)+'%'">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-secondary">Interest: <span id="lbl_wi">20%</span></label>
+                            <input type="range" class="form-range" name="weight_interest" min="0.05" max="0.5" step="0.05" value="0.20"
+                                   oninput="document.getElementById('lbl_wi').textContent = Math.round(this.value*100)+'%'">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-secondary">Exp: <span id="lbl_we">15%</span></label>
+                            <input type="range" class="form-range" name="weight_experience" min="0.05" max="0.4" step="0.05" value="0.15"
+                                   oninput="document.getElementById('lbl_we').textContent = Math.round(this.value*100)+'%'">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-secondary">Avail: <span id="lbl_wa">15%</span></label>
+                            <input type="range" class="form-range" name="weight_availability" min="0.05" max="0.4" step="0.05" value="0.15"
+                                   oninput="document.getElementById('lbl_wa').textContent = Math.round(this.value*100)+'%'">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-secondary">Role: <span id="lbl_wr">10%</span></label>
+                            <input type="range" class="form-range" name="weight_role" min="0.05" max="0.3" step="0.05" value="0.10"
+                                   oninput="document.getElementById('lbl_wr').textContent = Math.round(this.value*100)+'%'">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-medium shadow-sm">
+                        <i class="bi bi-play-circle-fill me-1"></i> Run Simulation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Comparison Diff & Results -->
+    <div class="col-lg-7">
+        {% if simulation_result %}
+        {% set diff = simulation_result.diff %}
+        <div class="card border border-primary shadow-sm mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-clipboard-data me-2"></i>Simulation Impact Analysis (Diff)</span>
+                <span class="badge bg-white text-primary">Sim #{{ diff.sim_id }}</span>
+            </div>
+            <div class="card-body p-4">
+                <!-- Impact Stat Badges -->
+                <div class="row g-3 text-center mb-4">
+                    <div class="col-sm-4 col-6">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small">Skill Coverage</span>
+                            <div class="fw-bold fs-5">
+                                {{ diff.skill_cov_after }}%
+                                <span class="badge {% if diff.skill_cov_diff >= 0 %}badge-soft-success{% else %}badge-soft-danger{% endif %}" style="font-size: 0.7rem;">
+                                    {% if diff.skill_cov_diff >= 0 %}+{% endif %}{{ diff.skill_cov_diff }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-6">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small">Role Coverage</span>
+                            <div class="fw-bold fs-5">
+                                {{ diff.role_cov_after }}%
+                                <span class="badge {% if diff.role_cov_diff >= 0 %}badge-soft-success{% else %}badge-soft-danger{% endif %}" style="font-size: 0.7rem;">
+                                    {% if diff.role_cov_diff >= 0 %}+{% endif %}{{ diff.role_cov_diff }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-12">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small">Students Moved</span>
+                            <div class="fw-bold fs-5 text-warning">{{ diff.students_moved_count }} Members</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Movement Table -->
+                <h6 class="fw-bold small text-uppercase text-muted mb-2">Member Reallocation Diff (Sample)</h6>
+                {% if diff.students_moved and diff.students_moved|length > 0 %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Previous Team</th>
+                                <th>New Simulated Team</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in diff.students_moved %}
+                            <tr>
+                                <td class="fw-semibold">{{ m.student_name }}</td>
+                                <td><span class="badge bg-light text-muted border">{{ m.from_team }}</span></td>
+                                <td><span class="badge badge-soft-primary">{{ m.to_team }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="small text-muted mb-4">No student team assignments were shifted under this configuration.</p>
+                {% endif %}
+
+                <!-- Apply Button (Never silently overwrites) -->
+                <div class="border-top pt-3 d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Satisfied with these simulated results?</span>
+                    <form method="POST" action="{{ url_for('simulation.apply_simulation', project_id=project.id, sim_id=diff.sim_id) }}">
+                        <button type="submit" class="btn btn-success fw-medium shadow-sm" data-confirm="Apply simulation results to create a new Proposed Team Generation Run? (Existing approved teams will not be overwritten)">
+                            <i class="bi bi-check2-all me-1"></i> Apply Results to Proposed Teams
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card border p-5 text-center text-muted h-100 d-flex align-items-center justify-content-center">
+            <div>
+                <i class="bi bi-sliders fs-1 mb-2"></i>
+                <h5>What-If Simulator Ready</h5>
+                <p class="small">Adjust the parameters on the left and click <strong>"Run Simulation"</strong> to inspect changes without affecting live team assignments.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

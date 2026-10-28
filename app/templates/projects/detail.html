@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} - Project Details{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ project.title }}</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-0">{{ project.title }}</h3>
+        <span class="text-muted small">Academic Domain: <strong>{{ project.domain }}</strong> • Created: {{ project.created_at.strftime('%b %d, %Y') }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if g.user.is_faculty() %}
+        <a href="{{ url_for('projects.edit', id=project.id) }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-pencil"></i> Edit Requirements
+        </a>
+        <a href="{{ url_for('teams.generate', project_id=project.id) }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+            <i class="bi bi-magic"></i> Form Teams
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Project Description Card -->
+        <div class="card mb-4 border shadow-sm">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-file-text me-2 text-primary"></i>Project Description & Scope
+            </div>
+            <div class="card-body p-4">
+                <p class="text-secondary leading-relaxed mb-0">
+                    {{ project.description }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Required Skills & Competencies -->
+        <div class="card mb-4 border shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="bi bi-code-slash me-2 text-primary"></i>Required Technical Skills</span>
+                <span class="badge bg-light text-muted border">{{ project.required_skills|length }} Skills</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Skill Name</th>
+                                <th>Category</th>
+                                <th>Minimum Proficiency</th>
+                                <th>Constraint Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ps in project.required_skills %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ ps.skill.name }}</td>
+                                <td><span class="badge bg-light text-muted border">{{ ps.skill.category }}</span></td>
+                                <td>
+                                    <span class="badge {% if ps.min_proficiency == 'Advanced' %}badge-soft-primary{% elif ps.min_proficiency == 'Intermediate' %}badge-soft-info{% else %}badge-soft-secondary{% endif %}">
+                                        {{ ps.min_proficiency }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if ps.is_mandatory %}
+                                    <span class="badge badge-soft-danger"><i class="bi bi-shield-lock me-1"></i>Mandatory</span>
+                                    {% else %}
+                                    <span class="badge badge-soft-secondary">Preferred</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-muted text-center py-3">No skills listed.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Runs for this Project -->
+        <div class="card border shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="bi bi-clock-history me-2 text-primary"></i>Team Formation Runs</span>
+                <span class="badge bg-light text-muted border">{{ project.generation_runs|length }} Runs</span>
+            </div>
+            <div class="card-body p-0">
+                {% if project.generation_runs and project.generation_runs|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Run ID</th>
+                                <th>Formation Method</th>
+                                <th>Teams Formed</th>
+                                <th>Skill Coverage</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for run in project.generation_runs %}
+                            <tr>
+                                <td>#{{ run.id }}</td>
+                                <td>
+                                    {% if run.method == 'traditional' %}
+                                    <span class="badge badge-soft-primary"><i class="bi bi-diagram-2 me-1"></i>Traditional Rules</span>
+                                    {% elif run.method == 'ai_clustering' %}
+                                    <span class="badge badge-soft-success"><i class="bi bi-cpu me-1"></i>AI Clustering</span>
+                                    {% else %}
+                                    <span class="badge badge-soft-info">{{ run.method }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ run.metrics.get('teams_count', run.teams|length) }} Teams</td>
+                                <td>
+                                    <span class="fw-semibold text-success">{{ run.metrics.get('avg_skill_coverage', 0) }}%</span>
+                                </td>
+                                <td>
+                                    {% if run.is_approved %}
+                                    <span class="badge bg-success">Approved</span>
+                                    {% else %}
+                                    <span class="badge badge-soft-warning">Proposed</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('teams.view_run', project_id=project.id, run_id=run.id) }}" class="btn btn-outline-primary btn-sm py-0 px-2">
+                                        View Teams
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted small">
+                    No teams generated yet for this project.
+                    {% if g.user.is_faculty() %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('teams.generate', project_id=project.id) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-magic me-1"></i>Generate First Run
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Info Parameters -->
+    <div class="col-lg-4">
+        <div class="card border shadow-sm mb-4">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-sliders me-2 text-primary"></i>Project Parameters
+            </div>
+            <div class="card-body p-3">
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Target Team Size:</span>
+                        <span class="fw-bold">{{ project.preferred_team_size }} Students</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Allowed Size Bounds:</span>
+                        <span class="fw-semibold">{{ project.min_team_size }} - {{ project.max_team_size }} Members</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Min Availability:</span>
+                        <span class="fw-semibold">{{ project.min_availability_hours }} Hours/Week</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Min Experience:</span>
+                        <span class="fw-semibold">{{ project.min_experience_months }} Months</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border shadow-sm">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-award me-2 text-primary"></i>Required Roles
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for pr in project.required_roles %}
+                    <span class="badge badge-soft-purple px-2 py-1"><i class="bi bi-check2 me-1"></i>{{ pr.role_name }}</span>
+                    {% else %}
+                    <span class="text-muted small">No specific role constraints specified.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

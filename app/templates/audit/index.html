@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Fairness & Allocation Audit - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Allocation Audit</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-1">Fairness & Allocation Audit</h3>
+        <p class="text-muted small mb-0">Transparent audit trail verifying team size compliance, unassigned students, and faculty reallocations.</p>
+    </div>
+
+    <div>
+        {% if all_projects|length > 1 %}
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Project: {{ project.title[:20] }}...
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                {% for p in all_projects %}
+                <li><a class="dropdown-item small" href="{{ url_for('audit.project_audit', project_id=p.id) }}">{{ p.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Non-Discrimination & Academic Fairness Policy Card -->
+<div class="alert alert-light border small text-secondary mb-4">
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-shield-check text-success fs-5 mt-1"></i>
+        <div>
+            <strong class="text-dark">Algorithmic Fairness Commitment:</strong>
+            Team formation algorithms strictly utilize academic skills, declared proficiencies, relevant project experience, and schedule availability.
+            No sensitive personal attributes (gender, age, ethnicity, or socioeconomic background) are ever ingested or utilized by any matching or clustering component.
+        </div>
+    </div>
+</div>
+
+<!-- Section 1: Unassigned Students with Reasons (Requirement 15) -->
+<div class="card border shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-exclamation me-2 text-warning"></i>Unassigned Cohort Members & Exclusion Reasons</span>
+        <span class="badge {% if unassigned_details|length > 0 %}badge-soft-warning{% else %}badge-soft-success{% endif %}">
+            {{ unassigned_details|length }} Unassigned
+        </span>
+    </div>
+    <div class="card-body p-0">
+        {% if unassigned_details and unassigned_details|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th>Specific Exclusion / Remainder Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in unassigned_details %}
+                    <tr>
+                        <td class="text-muted small">{{ item.student.student_id }}</td>
+                        <td class="fw-semibold text-dark">{{ item.student.full_name }}</td>
+                        <td>{{ item.student.department }}</td>
+                        <td>
+                            <ul class="mb-0 ps-3 small text-secondary">
+                                {% for r in item.reasons %}
+                                <li>{{ r }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('students.profile', id=item.student.id) }}" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.75rem;">
+                                Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-success">
+            <i class="bi bi-check-circle fs-3 me-2"></i>
+            <span class="fw-semibold">100% of students in cohort assigned! Zero unassigned students.</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Section 2: Team Size Compliance Check -->
+<div class="card border shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">
+        <i class="bi bi-rulers me-2 text-primary"></i>Team Size Compliance Bounds [{{ project.min_team_size }} - {{ project.max_team_size }} Members]
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Current Member Count</th>
+                        <th>Target Size</th>
+                        <th>Allowed Range</th>
+                        <th>Compliance Status</th>
+                        <th>Audit Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sc in size_compliance %}
+                    <tr>
+                        <td class="fw-bold">{{ sc.team_name }}</td>
+                        <td>{{ sc.size }} Students</td>
+                        <td>{{ project.preferred_team_size }}</td>
+                        <td>{{ sc.min }} - {{ sc.max }}</td>
+                        <td>
+                            {% if sc.status == 'Compliant' %}
+                            <span class="badge badge-soft-success"><i class="bi bi-check-circle me-1"></i>Compliant</span>
+                            {% else %}
+                            <span class="badge badge-soft-danger"><i class="bi bi-exclamation-triangle me-1"></i>Non-compliant</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ sc.reason }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-3 text-muted">No active run to audit.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Faculty Manual Adjustments Audit Trail -->
+<div class="card border shadow-sm mb-5">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-journal-text me-2 text-primary"></i>Faculty Reallocation Audit History</span>
+        <span class="text-muted small">Tracks all manual overrides and approvals</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action Type</th>
+                        <th>Audit Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in manual_edits %}
+                    <tr>
+                        <td class="text-muted small" style="width: 20%;">{{ m.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td style="width: 25%;"><span class="badge bg-light text-dark border">{{ m.action_type }}</span></td>
+                        <td class="text-secondary small">{{ m.description }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center py-3 text-muted small">No manual faculty modifications recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

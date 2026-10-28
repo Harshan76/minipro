@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Skill Gaps & Learning Suggestions - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Learning Suggestions</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-1">Skill Gap & Learning Suggestions</h3>
+        <p class="text-muted small mb-0">Actionable learning tasks and official documentation resources targeted at unmet technical requirements across teams.</p>
+    </div>
+
+    <div>
+        {% if all_projects|length > 1 %}
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Project: {{ project.title[:20] }}...
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                {% for p in all_projects %}
+                <li><a class="dropdown-item small" href="{{ url_for('learning.project_learning', project_id=p.id) }}">{{ p.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Transparency Alert -->
+<div class="alert alert-light border small text-secondary mb-4">
+    <i class="bi bi-info-circle text-primary me-1"></i>
+    <strong>Curated Pedagogical Resources:</strong> These learning roadmaps are mapped directly from project prerequisite requirements to verified official documentation links and tutorials.
+</div>
+
+{% if gaps and gaps|length > 0 %}
+<div class="card border shadow-sm mb-5">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-mortarboard me-2 text-primary"></i>Identified Team Skill Deficits ({{ gaps|length }} Gaps)</span>
+        <span class="badge bg-light text-muted border">Project: {{ project.title }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Affected Team</th>
+                        <th style="width: 14%;">Missing Skill</th>
+                        <th style="width: 32%;">Suggested Learning Task</th>
+                        <th style="width: 24%;">Official Learning Resource</th>
+                        <th style="width: 18%;">Curriculum Relevance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in gaps %}
+                    <tr>
+                        <td>
+                            <span class="fw-bold text-dark">{{ g.team_name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if g.is_mandatory %}badge-soft-danger{% else %}badge-soft-warning{% endif %}">
+                                {{ g.skill_name }} ({{ g.min_proficiency }})
+                            </span>
+                        </td>
+                        <td class="small text-secondary">
+                            {{ g.task }}
+                        </td>
+                        <td>
+                            <a href="{{ g.resource_url }}" target="_blank" class="fw-medium text-primary text-decoration-none small d-flex align-items-center gap-1">
+                                <span>{{ g.resource_name }}</span>
+                                <i class="bi bi-box-arrow-up-right" style="font-size: 0.7rem;"></i>
+                            </a>
+                        </td>
+                        <td class="text-muted small">
+                            {{ g.reason }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card border p-5 text-center text-muted">
+    <i class="bi bi-check-circle-fill text-success fs-1 mb-2"></i>
+    <h5 class="text-success fw-bold">Zero Skill Gaps Detected!</h5>
+    <p class="small">All formed teams satisfy 100% of the project's technical skill requirements, or no teams have been formed yet.</p>
+    {% if g.user.is_faculty() %}
+    <a href="{{ url_for('teams.generate', project_id=project.id) }}" class="btn btn-outline-primary btn-sm mx-auto">Inspect Team Formation</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

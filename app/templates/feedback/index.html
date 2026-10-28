@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Student Feedback Analysis - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-1">Student Feedback & Evaluation Insights</h3>
+    <p class="text-muted small">Analyze student satisfaction metrics and track ground-truth outcome data collection for future supervised learning models.</p>
+</div>
+
+<!-- Supervised ML Data Readiness Alert (Requirement 14) -->
+<div class="card border {% if has_sufficient_ml_data %}border-success{% else %}border-info{% endif %} shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-cpu me-2 text-primary"></i>Supervised Machine Learning Ground-Truth Readiness</span>
+        <span class="badge {% if has_sufficient_ml_data %}bg-success{% else %}badge-soft-info{% endif %}">
+            Status: {{ 'Ready for Supervised Training' if has_sufficient_ml_data else 'Collecting Ground-Truth Data' }}
+        </span>
+    </div>
+    <div class="card-body p-4">
+        <p class="small text-secondary mb-3">
+            <strong>Pedagogical Requirement:</strong> To train a genuine supervised outcome-prediction model (predicting team performance or satisfaction), statistically valid ground-truth labels are required.
+            The platform requires at least <strong>{{ min_required_samples }}</strong> authentic peer evaluations before supervised regression/classification can be activated.
+        </p>
+
+        <div class="d-flex justify-content-between align-items-center mb-1 small">
+            <span class="text-muted">Collected Real Student Feedback Samples:</span>
+            <span class="fw-bold text-dark">{{ total_count }} / {{ min_required_samples }} Verified Reviews</span>
+        </div>
+        {% set prog_pct = (total_count / min_required_samples * 100) if min_required_samples > 0 else 0 %}
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar {% if has_sufficient_ml_data %}bg-success{% else %}bg-info{% endif %}"
+                 style="width: {{ prog_pct if prog_pct <= 100 else 100 }}%;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Aggregated Satisfaction Ratings Strip -->
+<div class="row g-3 mb-4 text-center">
+    <div class="col-sm-3 col-6">
+        <div class="card border shadow-sm p-3">
+            <span class="text-muted small">Skill Fit Satisfaction</span>
+            <div class="fw-bold fs-4 text-primary">{{ avg_skill_fit }} <span class="text-muted small">/ 5.0</span></div>
+        </div>
+    </div>
+    <div class="col-sm-3 col-6">
+        <div class="card border shadow-sm p-3">
+            <span class="text-muted small">Role Appropriateness</span>
+            <div class="fw-bold fs-4 text-success">{{ avg_role_sat }} <span class="text-muted small">/ 5.0</span></div>
+        </div>
+    </div>
+    <div class="col-sm-3 col-6">
+        <div class="card border shadow-sm p-3">
+            <span class="text-muted small">Schedule Compatibility</span>
+            <div class="fw-bold fs-4 text-info">{{ avg_avail_comp }} <span class="text-muted small">/ 5.0</span></div>
+        </div>
+    </div>
+    <div class="col-sm-3 col-6">
+        <div class="card border shadow-sm p-3">
+            <span class="text-muted small">Team Collaboration</span>
+            <div class="fw-bold fs-4 text-warning">{{ avg_collab }} <span class="text-muted small">/ 5.0</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Feedback Submissions Table -->
+<div class="card border shadow-sm mb-5">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-chat-left-quote me-2 text-primary"></i>Individual Student Feedback Logs</span>
+        <span class="badge bg-light text-muted border">{{ feedbacks|length }} Submissions</span>
+    </div>
+    <div class="card-body p-0">
+        {% if feedbacks and feedbacks|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Project / Team</th>
+                        <th>Skill Fit</th>
+                        <th>Roles</th>
+                        <th>Availability</th>
+                        <th>Collaboration</th>
+                        <th>Student Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in feedbacks %}
+                    <tr>
+                        <td class="text-muted small">{{ f.submitted_at.strftime('%b %d, %Y') }}</td>
+                        <td class="fw-semibold text-dark">{{ f.student.full_name }}</td>
+                        <td>
+                            <span class="badge badge-soft-primary">{{ f.team.name if f.team else 'General' }}</span>
+                        </td>
+                        <td>{{ f.skill_fit_rating }}/5</td>
+                        <td>{{ f.role_satisfaction_rating }}/5</td>
+                        <td>{{ f.availability_compatibility_rating }}/5</td>
+                        <td>{{ f.collaboration_rating }}/5</td>
+                        <td class="small text-secondary">{{ f.comments or 'No written comments.' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-chat-square-dots fs-1 mb-2"></i>
+            <h5>No student feedback received yet</h5>
+            <p class="small">Students can log in and submit reviews regarding their team allocations.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

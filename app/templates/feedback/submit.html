@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Team Experience Feedback - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold mb-1">Student Collaboration Feedback</h3>
+    <p class="text-muted small">Share your experience regarding your team placement to help refine future academic group allocations.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-star me-2 text-primary"></i>Team Experience Evaluation Form
+            </div>
+            <div class="card-body p-4">
+                {% if team %}
+                <div class="alert alert-light border mb-4">
+                    <span class="text-muted small">Evaluating Team:</span>
+                    <h5 class="fw-bold mb-0 text-primary">{{ team.name }}</h5>
+                    <span class="small text-muted">Project: {{ project.title if project else 'Course Project' }}</span>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('feedback.submit') }}">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">1. Did the proposed team project match your technical skills?</label>
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                            <span class="small text-muted">1 - Poor Fit</span>
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="radio" name="skill_fit_rating" value="{{ i }}" id="sk_{{ i }}"
+                                       {% if (existing and existing.skill_fit_rating == i) or (not existing and i == 4) %}checked{% endif %}>
+                                <label class="form-check-label fw-bold small" for="sk_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                            <span class="small text-muted">5 - Excellent Fit</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">2. Were the assigned project roles appropriate for each team member?</label>
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                            <span class="small text-muted">1 - Mismatched</span>
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="radio" name="role_satisfaction_rating" value="{{ i }}" id="rs_{{ i }}"
+                                       {% if (existing and existing.role_satisfaction_rating == i) or (not existing and i == 4) %}checked{% endif %}>
+                                <label class="form-check-label fw-bold small" for="rs_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                            <span class="small text-muted">5 - Highly Appropriate</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">3. Was scheduling and time availability compatible among team members?</label>
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                            <span class="small text-muted">1 - Frequent Conflicts</span>
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="radio" name="availability_compatibility_rating" value="{{ i }}" id="av_{{ i }}"
+                                       {% if (existing and existing.availability_compatibility_rating == i) or (not existing and i == 4) %}checked{% endif %}>
+                                <label class="form-check-label fw-bold small" for="av_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                            <span class="small text-muted">5 - Perfectly Compatible</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">4. How effectively did team members collaborate and communicate?</label>
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-light">
+                            <span class="small text-muted">1 - Ineffective</span>
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="radio" name="collaboration_rating" value="{{ i }}" id="co_{{ i }}"
+                                       {% if (existing and existing.collaboration_rating == i) or (not existing and i == 4) %}checked{% endif %}>
+                                <label class="form-check-label fw-bold small" for="co_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                            <span class="small text-muted">5 - Smooth Synergy</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">Optional Comments or Suggestions for Faculty</label>
+                        <textarea class="form-control" name="comments" rows="3" placeholder="Provide constructive feedback on team dynamics, workload distribution, or tool tooling...">{{ existing.comments if existing else '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4 fw-medium">
+                        <i class="bi bi-send me-1"></i> Submit Evaluation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

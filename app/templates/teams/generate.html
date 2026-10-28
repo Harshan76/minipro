@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Teams - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.detail', id=project.id) }}">{{ project.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Form Teams</li>
+        </ol>
+    </nav>
+    <h3 class="fw-bold mb-1">Generate Balanced Project Teams</h3>
+    <p class="text-muted small">Choose between the Traditional Rule-Based Matching baseline or the AI-Powered Archetype Clustering method.</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <!-- Project Summary Card -->
+        <div class="card border shadow-sm">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-folder-check me-2 text-primary"></i>Target Project Context
+            </div>
+            <div class="card-body p-3">
+                <h5 class="fw-bold mb-1 text-primary">{{ project.title }}</h5>
+                <span class="badge badge-soft-primary mb-2">{{ project.domain }}</span>
+                <p class="text-muted small mb-3">{{ project.description[:120] }}...</p>
+
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Target Team Size:</span>
+                        <span class="fw-bold">{{ project.preferred_team_size }} members</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Eligible Student Pool:</span>
+                        <span class="fw-bold text-success">{{ students_count }} students</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Required Skills:</span>
+                        <span class="fw-semibold">{{ project.required_skills|length }} competencies</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Method 1: Traditional Rule-Based -->
+        <div class="card border shadow-sm mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between bg-white">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary p-2 fs-6"><i class="bi bi-diagram-2"></i></span>
+                    <div>
+                        <h5 class="fw-bold mb-0">Method 1: Traditional Rule-Based Method</h5>
+                        <span class="text-muted small">Baseline multi-objective weighted greedy matching</span>
+                    </div>
+                </div>
+                <span class="badge badge-soft-primary">Predefined Weights</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-light border small text-dark mb-3">
+                    <i class="bi bi-info-circle text-primary me-1"></i>
+                    <strong>Method Summary:</strong> This method follows predefined rules and weights. It provides a baseline for comparing our AI-based recommendations.
+                </div>
+
+                <form method="POST" action="{{ url_for('teams.generate', project_id=project.id) }}">
+                    <input type="hidden" name="method" value="traditional">
+
+                    <h6 class="fw-bold small text-uppercase text-muted mb-2">Configurable Starting Matching Weights (Normalized)</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-4 col-6">
+                            <label class="form-label small fw-semibold text-secondary">Skill Match: <span id="val_skill">40%</span></label>
+                            <input type="range" class="form-range" name="weight_skill" min="0.10" max="0.70" step="0.05" value="0.40"
+                                   oninput="document.getElementById('val_skill').textContent = Math.round(this.value*100) + '%'">
+                        </div>
+                        <div class="col-sm-4 col-6">
+                            <label class="form-label small fw-semibold text-secondary">Interest Match: <span id="val_interest">20%</span></label>
+                            <input type="range" class="form-range" name="weight_interest" min="0.05" max="0.50" step="0.05" value="0.20"
+                                   oninput="document.getElementById('val_interest').textContent = Math.round(this.value*100) + '%'">
+                        </div>
+                        <div class="col-sm-4 col-6">
+                            <label class="form-label small fw-semibold text-secondary">Experience: <span id="val_exp">15%</span></label>
+                            <input type="range" class="form-range" name="weight_experience" min="0.05" max="0.40" step="0.05" value="0.15"
+                                   oninput="document.getElementById('val_exp').textContent = Math.round(this.value*100) + '%'">
+                        </div>
+                        <div class="col-sm-4 col-6">
+                            <label class="form-label small fw-semibold text-secondary">Availability: <span id="val_avail">15%</span></label>
+                            <input type="range" class="form-range" name="weight_availability" min="0.05" max="0.40" step="0.05" value="0.15"
+                                   oninput="document.getElementById('val_avail').textContent = Math.round(this.value*100) + '%'">
+                        </div>
+                        <div class="col-sm-4 col-6">
+                            <label class="form-label small fw-semibold text-secondary">Role Alignment: <span id="val_role">10%</span></label>
+                            <input type="range" class="form-range" name="weight_role" min="0.05" max="0.30" step="0.05" value="0.10"
+                                   oninput="document.getElementById('val_role').textContent = Math.round(this.value*100) + '%'">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-primary fw-medium">
+                        <i class="bi bi-play-circle me-1"></i> Form Teams Using Traditional Rules
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Method 2: AI-Powered Clustering -->
+        <div class="card border shadow-sm border-primary">
+            <div class="card-header d-flex align-items-center justify-content-between bg-primary bg-opacity-10 border-bottom border-primary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success p-2 fs-6"><i class="bi bi-cpu"></i></span>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-primary">Method 2: AI-Powered Team Recommendations</h5>
+                        <span class="text-muted small">Scikit-learn KMeans Archetype Discovery & Complementary Knapsack</span>
+                    </div>
+                </div>
+                <span class="badge bg-success">Machine Learning</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-light border small text-dark mb-3">
+                    <i class="bi bi-stars text-primary me-1"></i>
+                    <strong>Method Summary:</strong> The AI model discovers patterns in student skills and interests. These patterns help the team builder recommend groups with complementary strengths. The final assignments are checked against project requirements.
+                </div>
+
+                <p class="small text-muted mb-4">
+                    The machine-learning pipeline extracts multi-dimensional feature vectors (skills with proficiencies, interests, schedule flexibility, roles), fits a standardized KMeans model, and groups complementary archetypes into high-synergy teams.
+                </p>
+
+                <form method="POST" action="{{ url_for('teams.generate', project_id=project.id) }}">
+                    <input type="hidden" name="method" value="ai_clustering">
+
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-medium shadow-sm">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Run AI Team Recommendations
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

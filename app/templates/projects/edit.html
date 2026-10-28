@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Project - {{ project.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.index') }}">Projects</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('projects.detail', id=project.id) }}">{{ project.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Requirements</li>
+        </ol>
+    </nav>
+    <h3 class="fw-bold mb-1">Edit Project Requirements</h3>
+    <p class="text-muted small">Update skills, team size bounds, and availability criteria.</p>
+</div>
+
+<form method="POST" action="{{ url_for('projects.edit', id=project.id) }}">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100 border shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-info-circle me-2 text-primary"></i>Project Scope & Details
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Project Title</label>
+                        <input type="text" class="form-control" name="title" value="{{ project.title }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Domain / Specialization</label>
+                        <input type="text" class="form-control" name="domain" value="{{ project.domain }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="Active" {% if project.status == 'Active' %}selected{% endif %}>Active</option>
+                            <option value="Completed" {% if project.status == 'Completed' %}selected{% endif %}>Completed</option>
+                            <option value="Draft" {% if project.status == 'Draft' %}selected{% endif %}>Draft</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea class="form-control" name="description" rows="5" required>{{ project.description }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-sliders me-2 text-primary"></i>Team Size & Constraints
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Target Size</label>
+                            <input type="number" class="form-control" name="preferred_team_size" value="{{ project.preferred_team_size }}" min="2">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Min Size</label>
+                            <input type="number" class="form-control" name="min_team_size" value="{{ project.min_team_size }}" min="2">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Max Size</label>
+                            <input type="number" class="form-control" name="max_team_size" value="{{ project.max_team_size }}" min="2">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Min Exp (Months)</label>
+                            <input type="number" class="form-control" name="min_experience_months" value="{{ project.min_experience_months }}" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Min Avail (Hours/Wk)</label>
+                            <input type="number" class="form-control" name="min_availability_hours" value="{{ project.min_availability_hours }}" min="4">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-semibold d-block">Expected Roles</label>
+                        <div class="row g-2">
+                            {% for role in ['Frontend Developer', 'Backend Developer', 'Fullstack Engineer', 'Data / ML Specialist', 'UI/UX Designer', 'DevOps / Cloud', 'QA / Tester', 'Project Lead'] %}
+                            <div class="col-6">
+                                <div class="form-check p-2 border rounded bg-light">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="roles[]" value="{{ role }}" id="edit_role_{{ loop.index }}"
+                                           {% if role in current_roles %}checked{% endif %}>
+                                    <label class="form-check-label small" for="edit_role_{{ loop.index }}">{{ role }}</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-code-slash me-2 text-primary"></i>Required Technical Skills
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        {% for sk in all_skills %}
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded bg-light">
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="skills[]" value="{{ sk.id }}" id="es_{{ sk.id }}"
+                                           {% if sk.id in current_skill_ids %}checked{% endif %}>
+                                    <label class="form-check-label small fw-semibold" for="es_{{ sk.id }}">{{ sk.name }}</label>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <select class="form-select form-select-sm" name="prof_{{ sk.id }}" style="font-size: 0.72rem;">
+                                        <option value="Beginner" {% if current_skill_ids.get(sk.id, {}).get('prof') == 'Beginner' %}selected{% endif %}>Beginner</option>
+                                        <option value="Intermediate" {% if current_skill_ids.get(sk.id, {}).get('prof') == 'Intermediate' or sk.id not in current_skill_ids %}selected{% endif %}>Intermediate</option>
+                                        <option value="Advanced" {% if current_skill_ids.get(sk.id, {}).get('prof') == 'Advanced' %}selected{% endif %}>Advanced</option>
+                                    </select>
+                                    <select class="form-select form-select-sm" name="mandatory_{{ sk.id }}" style="font-size: 0.72rem; width: 110px;">
+                                        <option value="1" {% if current_skill_ids.get(sk.id, {}).get('mandatory', True) %}selected{% endif %}>Mandatory</option>
+                                        <option value="0" {% if current_skill_ids.get(sk.id) and not current_skill_ids.get(sk.id, {}).get('mandatory') %}selected{% endif %}>Preferred</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4 mb-5">
+        <a href="{{ url_for('projects.detail', id=project.id) }}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary px-4 fw-medium">Save Changes</button>
+    </div>
+</form>
+{% endblock %}

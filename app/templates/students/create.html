@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Student - AI Group Project Team Builder{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+            <li class="breadcrumb-item"><a href="{{ url_for('students.index') }}">Students</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add Student</li>
+        </ol>
+    </nav>
+    <h3 class="fw-bold mb-1">Add New Student Profile</h3>
+    <p class="text-muted small">Register a student into the cohort directory with academic details and skills.</p>
+</div>
+
+<form method="POST" action="{{ url_for('students.create_student') }}">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100 border shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-person me-2 text-primary"></i>Student Identification
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Student ID</label>
+                        <input type="text" class="form-control" name="student_id" required placeholder="e.g. STU2026-035">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Full Name</label>
+                        <input type="text" class="form-control" name="full_name" required placeholder="e.g. Jane Doe">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">College Email</label>
+                        <input type="email" class="form-control" name="email" required placeholder="jane@college.edu">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-semibold">Department</label>
+                            <input type="text" class="form-control" name="department" value="Computer Science" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">Year of Study</label>
+                            <select class="form-select" name="year_of_study">
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3" selected>3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Experience (Months)</label>
+                            <input type="number" class="form-control" name="experience_months" value="12" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Available Hours/Week</label>
+                            <input type="number" class="form-control" name="available_hours_per_week" value="12" min="4" max="40">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 border shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-clock me-2 text-primary"></i>Availability & Roles
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold d-block">Available Days</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="checkbox" name="availability_days" value="{{ day }}" id="c_day_{{ day }}" checked>
+                                <label class="form-check-label small" for="c_day_{{ day }}">{{ day }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold d-block">Time Slots</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            {% for slot in ['Morning', 'Evening', 'Weekend'] %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="checkbox" name="availability_slots" value="{{ slot }}" id="c_slot_{{ slot }}" checked>
+                                <label class="form-check-label small" for="c_slot_{{ slot }}">{{ slot }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small fw-semibold d-block">Preferred Roles</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for role in ['Frontend Developer', 'Backend Developer', 'Fullstack Engineer', 'Data / ML Specialist', 'UI/UX Designer', 'DevOps / Cloud', 'QA / Tester'] %}
+                            <div class="form-check form-check-inline m-0">
+                                <input class="form-check-input" type="checkbox" name="preferred_roles" value="{{ role }}" id="c_role_{{ loop.index }}" {% if loop.index <= 2 %}checked{% endif %}>
+                                <label class="form-check-label small" for="c_role_{{ loop.index }}">{{ role }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border shadow-sm">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-code-slash me-2 text-primary"></i>Technical Skills & Proficiency Levels
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        {% for sk in all_skills %}
+                        <div class="col-md-4">
+                            <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="checkbox" name="skills[]" value="{{ sk.id }}" id="n_sk_{{ sk.id }}">
+                                    <label class="form-check-label small fw-medium" for="n_sk_{{ sk.id }}">{{ sk.name }}</label>
+                                </div>
+                                <select class="form-select form-select-sm" name="prof_{{ sk.id }}" style="width: 120px; font-size: 0.75rem;">
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate" selected>Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4 mb-5">
+        <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary px-4 fw-medium">Create Student</button>
+    </div>
+</form>
+{% endblock %}
