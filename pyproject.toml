@@ -1,2 +1,3 @@
 [tool.vercel]
+runtime = "python3.12"
 entrypoint = "run:app"
